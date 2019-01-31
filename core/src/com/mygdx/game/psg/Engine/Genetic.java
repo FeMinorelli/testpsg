@@ -1,29 +1,30 @@
 package com.mygdx.game.psg.Engine;
 
+import com.mygdx.game.psg.MainGame;
+
 import static com.badlogic.gdx.math.MathUtils.random;
 
-public class Attribute {
+public class Genetic {
 
-    public enum AttributeType {
+    public enum GenType {
         SIZE,
-        ATTACK,
-        DEFENSE,
+        OFFENSIVE,
+        DEFENSIVE,
         SPEED,
         REGEN
-
     }
 
-    private AttributeType[] DNA = new AttributeType[25];
-    private int[] resume = new int[5];
+    private GenType[] DNA = new GenType[MainGame.DNANumber];
+    private int[] resume = new int[GenType.values().length];
 
-    public Attribute(){
+    public Genetic(){
         setDNA();
         setResume();
     }
 
-    public int AttributeCount(AttributeType type){
+    public int AttributeCount(GenType type){
         int count = 0;
-        for (int i = 0; i < 25; i ++) {
+        for (int i = 0; i < MainGame.DNANumber; i ++) {
             if (DNA[i] == type) {
                 count++;
             }
@@ -34,11 +35,11 @@ public class Attribute {
     public void setDNA(){
 
         for(int i = 0; i < 25; i ++) {
-            DNA[i] = AttributeType.values()[random(0,4)];
+            DNA[i] = GenType.values()[random(0,4)];
         }
     }
 
-    public void setDNA(AttributeType[] DNA){
+    public void setDNA(GenType[] DNA){
 
         this.DNA =  DNA;
 
@@ -52,7 +53,7 @@ public class Attribute {
         return resume;
     }
 
-    public AttributeType[] getDNA(){
+    public GenType[] getDNA(){
         return DNA;
     }
 
@@ -60,7 +61,7 @@ public class Attribute {
 
         for(int i = 0; i < 5; i ++) {
 
-            resume[i] = this.AttributeCount(Attribute.AttributeType.values()[i]);
+            resume[i] = this.AttributeCount(GenType.values()[i]);
 
         }
     }

@@ -10,7 +10,6 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.mygdx.game.psg.MainGame;
 import com.mygdx.game.psg.Screens.MenuScreen;
-import com.mygdx.game.psg.Screens.PlayScreen;
 
 import static com.mygdx.game.psg.Sprites.Button.TypeButton.*;
 import static com.badlogic.gdx.math.MathUtils.random;
@@ -198,10 +197,10 @@ public Button(float x, float y, Button.TypeButton button, int index, boolean tit
     private void Regeneration(){
         if(MenuScreen.oneSelected){
             if(MenuScreen.button == this){
-                actualEnergy += 1000 + actualEnergy*0.01f;
+                actualEnergy += 1000 + actualEnergy*0.05f;
             }
         }else{
-            actualEnergy -= 500 + actualEnergy*0.0025f;
+            actualEnergy -= 500 + actualEnergy*0.05f;
         }
 
         if(button == EFFECT){
@@ -225,7 +224,7 @@ public Button(float x, float y, Button.TypeButton button, int index, boolean tit
                 case MENU: MainGame.controler = MainGame.Controler.MENU; break;
                 case NEW: MainGame.controler = MainGame.Controler.COLOR; MainGame.load = false; break;
                 case CONTINUE: MainGame.controler = MainGame.Controler.COLOR; MainGame.load = true; break;
-                case START: MainGame.controler = MainGame.Controler.START;  MainGame.alterated = true; break;
+                case START: MainGame.controler = MainGame.Controler.START;  MainGame.altered = true; break;
             }
         }
 

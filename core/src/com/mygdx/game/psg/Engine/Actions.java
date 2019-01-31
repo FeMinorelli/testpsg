@@ -1,71 +1,84 @@
 package com.mygdx.game.psg.Engine;
 
-
-import com.mygdx.game.psg.Sprites.Cell;
+import com.mygdx.game.psg.MainGame;
+import com.mygdx.game.psg.Sprites.Unity;
 
 import static com.badlogic.gdx.math.MathUtils.random;
 
 public class Actions {
 
+    public Genetic.GenType[] player, bot1, bot2, bot3, bot4, bot5, neutral;
 
-    public static Attribute.AttributeType[] actions = new Attribute.AttributeType[175];
-    public int fitness[] = new int[35];
 
-    public void AddAction(Cell.Team team, Attribute.AttributeType attributeType){
+    public int fitness[];
 
-        actions[random(0,24) + getIndex(team)] = attributeType;
+    public void setActions(){
+        player = new Genetic.GenType[MainGame.unityNumber];
+        bot1 = new Genetic.GenType[MainGame.unityNumber];
+        bot2 = new Genetic.GenType[MainGame.unityNumber];
+        bot3 = new Genetic.GenType[MainGame.unityNumber];
+        bot4 = new Genetic.GenType[MainGame.unityNumber];
+        bot5 = new Genetic.GenType[MainGame.unityNumber];
+        neutral = new Genetic.GenType[MainGame.unityNumber];
 
+        for(int i =0; i < MainGame.unityNumber; i++){
+            player[random(0, MainGame.unityNumber - 1)] = Genetic.GenType.values()[random(0, Genetic.GenType.values().length - 1)];
+            bot1[random(0, MainGame.unityNumber - 1)] = Genetic.GenType.values()[random(0, Genetic.GenType.values().length - 1)];
+            bot2[random(0, MainGame.unityNumber - 1)] = Genetic.GenType.values()[random(0, Genetic.GenType.values().length - 1)];
+            bot3[random(0, MainGame.unityNumber - 1)] = Genetic.GenType.values()[random(0, Genetic.GenType.values().length - 1)];
+            bot4[random(0, MainGame.unityNumber - 1)] = Genetic.GenType.values()[random(0, Genetic.GenType.values().length - 1)];
+            bot5[random(0, MainGame.unityNumber - 1)] = Genetic.GenType.values()[random(0, Genetic.GenType.values().length - 1)];
+            neutral[random(0, MainGame.unityNumber - 1)] = Genetic.GenType.values()[random(0, Genetic.GenType.values().length - 1)];
+        }
     }
 
-    public void SetFitness(){
+    public void AddAction(Unity.Team team, Genetic.GenType attributeType){
+        switch (team){
+            case PLAYER: player[random(0, MainGame.unityNumber - 1)] = attributeType;
+            case BOT1: bot1[random(0, MainGame.unityNumber - 1)] = attributeType;
+            case BOT2: bot2[random(0, MainGame.unityNumber - 1)] = attributeType;
+            case BOT3: bot3[random(0, MainGame.unityNumber - 1)] = attributeType;
+            case BOT4: bot4[random(0, MainGame.unityNumber - 1)] = attributeType;
+            case BOT5: bot5[random(0, MainGame.unityNumber - 1)] = attributeType;
+            case NEUTRAL: neutral[random(0, MainGame.unityNumber - 1)] = attributeType;
+        }
+    }
 
-        for(int i = 0; i < 7; i++) {
+    public int[] getFitness(Unity.Team team){
+        switch (team){
+            case PLAYER: return generateFitness(player);
+            case BOT1: return generateFitness(bot1);
+            case BOT2: return generateFitness(bot2);
+            case BOT3: return generateFitness(bot3);
+            case BOT4: return generateFitness(bot4);
+            case BOT5: return generateFitness(bot5);
+            case NEUTRAL: return generateFitness(neutral);
+        }
 
-            for (int a = 0; a < 5; a++) {
+        return fitness;
+    }
 
-                int counter = 0;
+    private int AttributeCount(Genetic.GenType[] attributes, Genetic.GenType type){
+        int count = 0;
 
-                for (int b = 0; b < 25; b++) {
-
-                    if (actions[b] == Attribute.AttributeType.values()[a]) {
-
-                        counter++;
-                    }
-                }
-
-                fitness[i + a * 5] = counter;
+        for (Genetic.GenType attribute : attributes) {
+            if (type == attribute) {
+                count++;
             }
         }
+        return count;
     }
 
-    public int[] getFitness(){
+    private int[] generateFitness(Genetic.GenType[] attribute){
 
-        SetFitness();
+        fitness = new int[Genetic.GenType.values().length];
 
-        return this.fitness;
+        for (int i = 0; i < Genetic.GenType.values().length; i++) {
 
-    }
+            fitness[i] = AttributeCount(attribute, Genetic.GenType.values()[i]);
 
-    private int getIndex(Cell.Team team){
-
-        switch (team){
-            case PLAYER: return 0;
-            case BOT1: return 24;
-            case BOT2: return 49;
-            case BOT3: return 74;
-            case BOT4: return 99;
-            case BOT5: return 124;
-            case NEUTRAL: return 149;
         }
 
-        return -1;
-    }
-
-    public static void setActions(Attribute.AttributeType[] actions) {
-        Actions.actions = actions;
-    }
-
-    public static Attribute.AttributeType[] getActions() {
-        return actions;
+        return fitness;
     }
 }

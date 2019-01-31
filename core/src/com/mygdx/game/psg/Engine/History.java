@@ -4,7 +4,7 @@ import static com.badlogic.gdx.math.MathUtils.randomBoolean;
 
 public class History {
 
-    public boolean[] history = new boolean[60];
+    public boolean[] history = new boolean[5];
 
     public History(){
 

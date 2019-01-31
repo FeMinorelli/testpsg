@@ -6,13 +6,13 @@ import com.badlogic.gdx.utils.JsonReader;
 
 import java.io.IOException;
 
-public class SaveGame {
+public class Save {
 
     Json myjson;
     JsonReader jsonReader;
 
 
-    public SaveGame() throws IOException {
+    public Save() throws IOException {
 
         myjson = new Json();
         jsonReader = new JsonReader();
@@ -32,13 +32,13 @@ public class SaveGame {
         return true;
     }
 
-    public BotAction GetBot(){
+    public Bot GetBot(){
 
-        return myjson.readValue(BotAction.class, jsonReader.parse(Gdx.files.local("Save/bot.json").readString()));
+        return myjson.readValue(Bot.class, jsonReader.parse(Gdx.files.local("Save/bot.json").readString()));
 
     }
 
-    public boolean SaveBot(BotAction bot){
+    public boolean SaveBot(Bot bot){
 
         Gdx.files.local("Save/bot.json").writeString(myjson.prettyPrint(bot), false);
 
@@ -54,6 +54,19 @@ public class SaveGame {
     public boolean SaveHistory(History history){
 
         Gdx.files.local("Save/history.json").writeString(myjson.prettyPrint(history), false);
+
+        return true;
+    }
+
+    public Actions GetActions(){
+
+        return myjson.readValue(Actions.class, jsonReader.parse(Gdx.files.local("Save/actions.json").readString()));
+
+    }
+
+    public boolean SaveActions(Actions actions){
+
+        Gdx.files.local("Save/actions.json").writeString(myjson.prettyPrint(actions), false);
 
         return true;
     }

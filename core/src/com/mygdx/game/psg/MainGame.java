@@ -4,13 +4,15 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.mygdx.game.psg.Engine.Attribute;
-import com.mygdx.game.psg.Engine.BotAction;
+import com.mygdx.game.psg.Engine.Actions;
+import com.mygdx.game.psg.Engine.Genetic;
+import com.mygdx.game.psg.Engine.Bot;
 import com.mygdx.game.psg.Engine.History;
 import com.mygdx.game.psg.Engine.Population;
-import com.mygdx.game.psg.Engine.SaveGame;
+import com.mygdx.game.psg.Engine.Save;
 import com.mygdx.game.psg.Screens.MenuScreen;
 import com.mygdx.game.psg.Screens.PlayScreen;
+import com.mygdx.game.psg.Sprites.Unity;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,42 +22,35 @@ import java.util.ArrayList;
 
 public class MainGame extends Game{
 
-	public SpriteBatch batch;
-	public static float V_Width = 1080, V_Height = 1920, PPM = 100;
-	public  static float W_Width, W_Height;
-	private PlayScreen playScreen;
-	private MenuScreen menuScreen;
+
+    public static final float M_Width = 3240, M_Height = 1920;
+	public static float V_Width = 1080, V_Height = 1920, PPM = 100, W_Width, W_Height;
+
+    public static final int DNANumber = 25;
+
+	public static final int unityNumber = 25;
+    public static Genetic[] playerUnits, bot1Units, bot2Units, bot3Units, bot4Units, bot5Units, neutralUnits;
+
+    public static final int min = 25, max = 75, chance = 20000;
+
+    public SpriteBatch batch;
+    private PlayScreen playScreen;
+    private MenuScreen menuScreen;
 
 	//save and load
 	public static boolean load, exists;
-    public Population loadPopulation = new Population();
-    public Population newPopulation = new Population();
-    public History loadHistory = new History();
-    public History newHistory = new History();
-    public BotAction loadBot = new BotAction();
-    public BotAction newBot = new BotAction();
+    public Save saveGame = new Save();
 
-    public SaveGame saveGame = new SaveGame();
+    private Population loadPopulation;
+    private History loadHistory;
+    private Bot loadBot;
+    private Actions loadActions;
 
-    public static Attribute[] attributes = new Attribute[175];
-    public static Attribute[] attributesLoad = new Attribute[175];
-    public static Attribute[] attributesNew = new Attribute[175];
-
-    public static boolean[] histories = new boolean[10];
-    public static boolean[] historiesLoad = new boolean[10];
-    public static boolean[] historiesNew = new boolean[10];
+    public static boolean[] historiesLoad;
     public static int wins, loses;
 
-    public static int[] actions = new int[30];
-    public static int[] actionsLoad = new int[30];
-    public static int[] actionsNew = new int[30];
-    public static int timeAttack;
-
 	public static ArrayList<Color> colors = new ArrayList<Color>();
-
-	public static float M_Width = 3*1080, M_Height = 1920;
-
-	public static boolean alterated = true;
+	public static boolean altered = true;
 
     public MainGame() throws IOException {
 
@@ -67,13 +62,13 @@ public class MainGame extends Game{
         START,
         RESTART
     }
-
     public static Controler controler = Controler.MENU;
-    File population = new File("Save/population.json");
-    File bot = new File("Save/bot.json");
-    File history = new File("Save/history.json");
 
-	public static boolean win, lose, restart, menu, color, start;
+    private File population = new File("Save/population.json");
+    private File bot = new File("Save/bot.json");
+    private File history = new File("Save/history.json");
+
+	public static boolean win, lose, color;
 
     @Override
 	public void create() {
@@ -88,10 +83,8 @@ public class MainGame extends Game{
 
         win = false;
         lose = false;
-        restart = false;
         color = false;
-        start = false;
-        menu = true;
+        load = true;
 
         W_Width = Gdx.graphics.getWidth();
         W_Height = Gdx.graphics.getHeight();
@@ -99,47 +92,34 @@ public class MainGame extends Game{
         batch = new SpriteBatch();
 
         if(population.exists() && bot.exists() && history.exists()){
-            load = true;
             exists = true;
         }
 
         if (exists) {
             loadPopulation = saveGame.GetPopulation();
-            attributesLoad = loadPopulation.getPopulation();
-
             loadBot = saveGame.GetBot();
-            actionsLoad = loadBot.getBotActions();
-            timeAttack = loadBot.timeAttack;
-
             loadHistory = saveGame.GetHistory();
-            historiesLoad = loadHistory.getHistory();
-
         } else {
-            load = false;
-
-            loadPopulation = newPopulation;
+            loadPopulation = new Population();
+            loadPopulation.setPopulation();
             saveGame.SavePopulation(loadPopulation);
-            attributesLoad = loadPopulation.getPopulation();
 
-            loadBot = newBot;
+            loadBot = new Bot();
+            loadBot.setBot();
             saveGame.SaveBot(loadBot);
-            actionsLoad = loadBot.getBotActions();
-            timeAttack = loadBot.timeAttack;
 
-            loadHistory = newHistory;
+            loadHistory = new History();
+            loadHistory.setHistory();
             saveGame.SaveHistory(loadHistory);
-            historiesLoad = loadHistory.getHistory();
         }
 
+        setTeams();
     }
 
 	@Override
 	public void render() {
 
-        if(alterated) {
-
-            loadHistory.setHistory(historiesLoad);
-            saveGame.SaveHistory(loadHistory);
+        if(altered) {
 
             if (win) {
                 V_Width += 1080 * 0.001f * wins;
@@ -151,20 +131,19 @@ public class MainGame extends Game{
                 V_Height -= 1920 * 0.001f * loses;
             }
 
-            if (V_Width < 1080 / 2 || V_Height < 1920 / 2) {
-                V_Width = 1080 / 2;
-                V_Height = 1920 / 2;
+            if (V_Width < 1080 / 4 || V_Height < 1920 / 4) {
+                V_Width = 1080 / 4;
+                V_Height = 1920 / 4;
             }
 
-            if (V_Width > 1080 * 2 || V_Height > 1920 * 2) {
-                V_Width = 1080 * 2;
-                V_Height = 1920 * 2;
+            if (V_Width > 1080 * 4 || V_Height > 1920 * 4) {
+                V_Width = 1080 * 4;
+                V_Height = 1920 * 4;
             }
-
         }
 
 
-        if(alterated) {
+        if(altered) {
 
             if (controler != Controler.START) {
                 try {
@@ -172,16 +151,11 @@ public class MainGame extends Game{
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
                 setScreen(menuScreen);
-                alterated = false;
+                altered = false;
 
             } else {
-
-                if(load){
-                    attributes = attributesLoad;
-                }else{
-                    attributes = attributesNew;
-                }
 
                 try {
                     playScreen = new PlayScreen(this);
@@ -189,12 +163,21 @@ public class MainGame extends Game{
                     e.printStackTrace();
                 }
                 setScreen(playScreen);
-                alterated = false;
+                altered = false;
             }
         }
-
 		super.render();
-
 	}
+
+	private void setTeams(){
+        playerUnits = loadPopulation.getPopulation(Unity.Team.PLAYER);
+        bot1Units = loadPopulation.getPopulation(Unity.Team.BOT1);
+        bot2Units = loadPopulation.getPopulation(Unity.Team.BOT2);
+        bot3Units = loadPopulation.getPopulation(Unity.Team.BOT3);
+        bot4Units = loadPopulation.getPopulation(Unity.Team.BOT4);
+        bot5Units = loadPopulation.getPopulation(Unity.Team.BOT5);
+        neutralUnits = loadPopulation.getPopulation(Unity.Team.NEUTRAL);
+    }
+
 
 }

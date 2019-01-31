@@ -23,7 +23,7 @@ import java.io.IOException;
 
 import static com.badlogic.gdx.math.MathUtils.random;
 
-public class MenuScreen implements Screen {
+public class GeneticScreen implements Screen {
 
     private static Stage stage;
     public static World world;
@@ -130,7 +130,7 @@ public class MenuScreen implements Screen {
         textureWin.dispose();
     }
 
-    public MenuScreen(MainGame game)throws IOException {
+    public GeneticScreen(MainGame game)throws IOException {
 
         //set zoom
         zoom = (MainGame.M_Height/MainGame.W_Height)*2;
@@ -157,46 +157,7 @@ public class MenuScreen implements Screen {
     }
 
     private void setMenu(){
-        stage.addActor(new Button(MainGame.M_Width/1.5f, -(MainGame.M_Height/2.5f - MainGame.M_Height/6f), Button.TypeButton.CONTINUE, 0, true));
-        stage.addActor(new Button(MainGame.M_Width/1.5f, -MainGame.M_Height/1.3f, Button.TypeButton.NEW, 6, true));
 
-        stage.addActor(new Button(-MainGame.M_Width/1.5f, -(MainGame.M_Height/2.5f - MainGame.M_Height/6f), Button.TypeButton.START, 0, true));
-        stage.addActor(new Button(-MainGame.M_Width/1.5f, -MainGame.M_Height/1.3f, Button.TypeButton.MENU, 6, true));
-
-        position = new Vector2();
-        position.set(0,MainGame.M_Height/2.5f);
-        position.setAngle(270);
-        stage.addActor(new Button(position.x, position.y + MainGame.M_Height/6, Button.TypeButton.COLOR, 0, false));
-        position.setAngle(position.angle() + 360/6);
-        stage.addActor(new Button(position.x, position.y + MainGame.M_Height/6, Button.TypeButton.COLOR, 1, false));
-        position.setAngle(position.angle() + 360/6);
-        stage.addActor(new Button(position.x, position.y + MainGame.M_Height/6, Button.TypeButton.COLOR, 2, false));
-        position.setAngle(position.angle() + 360/6);
-        stage.addActor(new Button(position.x, position.y + MainGame.M_Height/6, Button.TypeButton.COLOR, 3,true));
-        position.setAngle(position.angle() + 360/6);
-        stage.addActor(new Button(position.x, position.y + MainGame.M_Height/6, Button.TypeButton.COLOR, 4, false));
-        position.setAngle(position.angle() + 360/6);
-        stage.addActor(new Button(position.x, position.y + MainGame.M_Height/6, Button.TypeButton.COLOR, 5, false));
-
-        stage.addActor(new Button(0, -MainGame.M_Height/1.3f, Button.TypeButton.MENU, 6, true));
-
-        for(int i = 0; i < 25; i++){
-            stage.addActor(
-                    new Button(
-                            random(-MainGame.M_Width, MainGame.M_Width),
-                            random(-MainGame.M_Height, MainGame.M_Height),
-                            Button.TypeButton.EFFECT, 0, false));
-            stage.addActor(
-                    new Button(
-                            random(-MainGame.M_Width, MainGame.M_Width),
-                            random(-MainGame.M_Height, MainGame.M_Height),
-                            Button.TypeButton.EFFECT, 6, false));
-            stage.addActor(
-                    new Button(
-                            random(-MainGame.M_Width, MainGame.M_Width),
-                            random(-MainGame.M_Height, MainGame.M_Height),
-                            Button.TypeButton.EFFECT, random(1,5), false));
-        }
 
     }
 
@@ -231,8 +192,8 @@ public class MenuScreen implements Screen {
         }
 
         if(oneSelected) {
-        //draw select
-        DrawInfo();
+            //draw select
+            DrawInfo();
         }
 
         //button

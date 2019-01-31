@@ -7,13 +7,14 @@ import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.mygdx.game.psg.Engine.Attribute;
+import com.mygdx.game.psg.Engine.Genetic;
 import com.mygdx.game.psg.MainGame;
 import com.mygdx.game.psg.Screens.PlayScreen;
 
+import static com.badlogic.gdx.math.MathUtils.random;
 import static com.badlogic.gdx.math.MathUtils.randomBoolean;
 
-public class Cell extends Actor {
+public class Unity extends Actor {
 
     public enum Team {
         NEUTRAL,
@@ -33,15 +34,15 @@ public class Cell extends Actor {
 
     public Team team;
     public Body body;
-    public Attribute DNA;
+    public Genetic DNA;
     public static Status status;
 
     private Vector2 bodyPosition, inputPosition, velocity;
     private float  baseRegeneration;
     public  float baseRadius, radiusEnergy, baseAttack, baseMove, actualEnergy, maxEnergy;
-    private int[] resume = new int[5];
+    public int[] resume;
 
-    public Cell(float x, float y, Team team) {
+    public Unity(float x, float y, Team team) {
 
         bodyPosition = new Vector2();
         inputPosition = new Vector2();
@@ -49,7 +50,7 @@ public class Cell extends Actor {
         if(MainGame.load){
             DNA = PlayScreen.attribute;
         }else {
-            DNA = new Attribute();
+            DNA = new Genetic();
         }
 
         // 0 = size, 1 = attack, 2 = defense, 3 = speed, 4 = regen
@@ -92,13 +93,15 @@ public class Cell extends Actor {
         if(team != Team.PLAYER) {
             body.setLinearVelocity(velocity.setToRandomDirection());
         }
+
+        body.setAngularVelocity(random(-1f,1f));
     }
 
     @Override
     public void act(float delta) {
         radiusEnergy = baseRadius * RadiusEnergy(actualEnergy)/RadiusEnergy(maxEnergy);
 
-        if(PlayScreen.oneSelected && PlayScreen.selectedCell.team != Cell.Team.PLAYER){
+        if(PlayScreen.oneSelected && PlayScreen.selectedCell.team != Unity.Team.PLAYER){
             PlayScreen.oneSelected = false;
         }
 
@@ -107,26 +110,17 @@ public class Cell extends Actor {
 
         }else{
 
-            if(PlayScreen.oneTarget && PlayScreen.targetCell.team == Cell.Team.PLAYER){
+            if(PlayScreen.oneTarget && PlayScreen.targetCell.team == Unity.Team.PLAYER){
                 PlayScreen.oneTarget = false;
             }
 
-            if (PlayScreen.restartCount == 0) {
-                DelimiterBorder();
-                MoveOrAttack();
-                SelectOrTarget();
-                Regeneration();
-            } else {
-                if (team == Team.PLAYER) {
-                    DelimiterBorder();
-                }
-            }
+            DelimiterBorder();
+            MoveOrAttack();
+            SelectOrTarget();
+            Regeneration();
+
         }
 
-        if(PlayScreen.restartCount ==1 && team != Team.PLAYER){
-            velocity.set(baseMove, baseMove);
-            body.setLinearVelocity(velocity.setToRandomDirection());
-        }
 
         setColor();
     }
@@ -196,17 +190,17 @@ public class Cell extends Actor {
 
                 if (PlayScreen.targetCell.team == Team.PLAYER) {
 
-                    PlayScreen.typeAttack = Attribute.AttributeType.REGEN;
+                    PlayScreen.typeAttack = Genetic.GenType.REGEN;
 
                 } else {
 
                     if (PlayScreen.targetCell.team == Team.NEUTRAL) {
 
-                        PlayScreen.typeAttack = Attribute.AttributeType.SPEED;
+                        PlayScreen.typeAttack = Genetic.GenType.SPEED;
 
                     } else {
 
-                        PlayScreen.typeAttack = Attribute.AttributeType.ATTACK;
+                        PlayScreen.typeAttack = Genetic.GenType.OFFENSIVE;
 
                     }
                 }
@@ -217,15 +211,17 @@ public class Cell extends Actor {
     private void MoveOrAttack() {
 
         if(Gdx.input.justTouched() && PlayScreen.oneSelected && PlayScreen.selectedCell == this && team == Team.PLAYER) {
-            velocity.set(baseMove, baseMove).setAngle(InputPosition(inputPosition).sub(bodyPosition).angle());
-            body.setLinearVelocity(velocity);
-            PlayScreen.move = true;
+            if(!isTouched()) {
+                velocity.set(baseMove, baseMove).setAngle(InputPosition(inputPosition).sub(BodyPosition(bodyPosition)).angle());
+                body.setLinearVelocity(velocity);
+            }
 
             if (InputPosition(inputPosition).dst(BodyPosition(bodyPosition)) > baseRadius &&
                     InputPosition(inputPosition).dst(BodyPosition(bodyPosition)) < (baseRadius + PlayScreen.touchRadius * PlayScreen.zoom)) {
-                PlayScreen.attackDirection = InputPosition(inputPosition).sub(bodyPosition).angle();
+                PlayScreen.attackDirection = InputPosition(inputPosition).sub(BodyPosition(bodyPosition)).angle();
 
-                PlayScreen.typeAttack = Attribute.AttributeType.DEFENSE;
+                PlayScreen.typeAttack = Genetic.GenType.DEFENSIVE;
+                PlayScreen.oneTarget = false;
                 PlayScreen.oneFire = true;
             }
         }
@@ -241,7 +237,7 @@ public class Cell extends Actor {
         return (float)Math.sqrt(energy*3.14f);
     }
 
-    public static void Clear(Cell cell) {
+    public static void Clear(Unity cell) {
         if(cell.team == Team.PLAYER) {
             Stop(cell);
             PlayScreen.oneFire = false;
@@ -251,7 +247,12 @@ public class Cell extends Actor {
     }
 
     private void Regeneration(){
-        actualEnergy += baseRegeneration;
+        if(team == Team.NEUTRAL){
+            actualEnergy += baseRegeneration + PlayScreen.player + PlayScreen.bots - PlayScreen.neutral;
+        }else {
+            actualEnergy += baseRegeneration;
+        }
+
         if(actualEnergy > maxEnergy){
             actualEnergy = maxEnergy;
         }
@@ -308,12 +309,13 @@ public class Cell extends Actor {
         }
     }
 
-    public static void Stop(Cell cell){
+    public static void Stop(Unity cell){
         if(cell.team == Team.PLAYER)
         cell.body.setLinearVelocity(0,0);
+        cell.body.setAngularVelocity(0);
     }
 
-    public static Status Status(Cell cell){
+    public static Status Status(Unity cell){
 
         if(cell.actualEnergy < cell.maxEnergy * 0.01f){
             return Status.LOW;
@@ -326,18 +328,5 @@ public class Cell extends Actor {
         return Status.MID;
     }
 
-    public void Avoid(Attack attack){
-        velocity.set(baseMove, baseMove);
-
-        if(randomBoolean()) {
-
-            body.setLinearVelocity(velocity.setAngle(body.getPosition().sub(attack.body.getPosition()).angle() + 90));
-
-        }else{
-
-            body.setLinearVelocity(velocity.setAngle(body.getPosition().sub(attack.body.getPosition()).angle() - 90));
-
-        }
-    }
 }
 
