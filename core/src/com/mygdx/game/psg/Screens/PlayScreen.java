@@ -36,6 +36,11 @@ public class PlayScreen implements Screen{
 
     //game elements
     public static Stage stage;
+
+    public static Stage unity;
+    public static Stage attack;
+    public static Stage element;
+
     public static World world;
 
     private Box2DDebugRenderer box2DDebugRenderer;
@@ -91,8 +96,8 @@ public class PlayScreen implements Screen{
         //set zoom
         zoomInit = ((MainGame.W_Width/MainGame.V_Width)+(MainGame.W_Height/MainGame.V_Height))/2;
         zoom = MainGame.V_Width/MainGame.W_Width + MainGame.V_Height/MainGame.W_Height;
-        touchRadius = 100*zoomInit;
         zoomFinal = zoom;
+        touchRadius = 100 * zoomInit;
         this.game = game;
 
         //create camera & create viewport
@@ -130,6 +135,11 @@ public class PlayScreen implements Screen{
     public void show() {
         //add units on stage
         stage = new Stage();
+
+        unity = new Stage();
+        attack = new Stage();
+        element = new Stage();
+
         newGame();
     }
 
@@ -594,7 +604,7 @@ public class PlayScreen implements Screen{
     }
 
     private void DrawLightAttack(Attack attack){
-
+/*
         game.batch.setColor(
                 attack.getColor().r,
                 attack.getColor().g,
@@ -605,30 +615,30 @@ public class PlayScreen implements Screen{
                 attack.body.getPosition().x* MainGame.PPM - attack.energyRadius*2f,
                 attack.body.getPosition().y* MainGame.PPM - attack.energyRadius*2f,
                 attack.energyRadius *4,attack.energyRadius *4);
-
+*/
         game.batch.setColor(attack.getColor());
 
         switch (attack.type){
             case OFFENSIVE:
                 game.batch.draw(regionAttack,
-                        attack.body.getPosition().x * MainGame.PPM - attack.energyRadius * 1.75f,
-                        attack.body.getPosition().y * MainGame.PPM - attack.energyRadius * 1.75f,
-                        attack.energyRadius * 1.75f,
-                        attack.energyRadius * 1.75f,
-                        attack.energyRadius * 3.5f,
-                        attack.energyRadius* 3.5f,
+                        attack.body.getPosition().x * MainGame.PPM - attack.energyRadius * 2f,
+                        attack.body.getPosition().y * MainGame.PPM - attack.energyRadius * 2f,
+                        attack.energyRadius * 2f,
+                        attack.energyRadius * 2f,
+                        attack.energyRadius * 4f,
+                        attack.energyRadius* 4f,
                         1,
                         1,
                         attack.body.getAngle()*180/3.14f);
                 break;
             case DEFENSIVE:
                 game.batch.draw(regionDefense,
-                        attack.body.getPosition().x * MainGame.PPM - attack.energyRadius * 1.5f,
-                        attack.body.getPosition().y * MainGame.PPM - attack.energyRadius * 1.5f,
-                        attack.energyRadius * 1.5f,
-                        attack.energyRadius * 1.5f,
-                        attack.energyRadius * 3f,
-                        attack.energyRadius* 3f,
+                        attack.body.getPosition().x * MainGame.PPM - attack.energyRadius * 1.25f,
+                        attack.body.getPosition().y * MainGame.PPM - attack.energyRadius * 1.25f,
+                        attack.energyRadius * 1.25f,
+                        attack.energyRadius * 1.25f,
+                        attack.energyRadius * 2.5f,
+                        attack.energyRadius* 2.5f,
                         1,
                         1,
                         attack.body.getAngle()*180/3.14f);
@@ -646,22 +656,11 @@ public class PlayScreen implements Screen{
                         attack.body.getAngle()*180/3.14f);
                 break;
 
-            case SIZE:
-                game.batch.draw(regionSizeWhite,
-                        attack.body.getPosition().x * MainGame.PPM - attack.energyRadius * 1.5f,
-                        attack.body.getPosition().y * MainGame.PPM - attack.energyRadius * 1.5f,
-                        attack.energyRadius * 1.5f,
-                        attack.energyRadius * 1.5f,
-                        attack.energyRadius * 3f,
-                        attack.energyRadius * 3f,
-                        1,
-                        1,
-                        attack.body.getAngle()*180/3.14f);
         }
     }
 
     private void DrawLightCell(Unity cell){
-
+/*
         game.batch.setColor(
                 cell.getColor().r,
                 cell.getColor().g,
@@ -674,7 +673,7 @@ public class PlayScreen implements Screen{
                 cell.body.getPosition().y * MainGame.PPM -  (cell.radiusEnergy * 3f),
                 cell.radiusEnergy * 6f,
                 cell.radiusEnergy * 6f);
-
+*/
         //draw effects
         game.batch.setColor(
                 cell.getColor().r,
@@ -730,6 +729,13 @@ public class PlayScreen implements Screen{
     }
 
     private  void DrawInfo(){
+
+        game.batch.setColor(
+                MainGame.colors.get(0).r,
+                MainGame.colors.get(0).g,
+                MainGame.colors.get(0).b,
+                MainGame.colors.get(0).a * 0.8f);
+
         if(oneSelected){
 
             //draw select
@@ -747,19 +753,19 @@ public class PlayScreen implements Screen{
                     selectedCell.body.getPosition().y* MainGame.PPM - (selectedCell.baseRadius + touchRadius*zoom) * 2f,
                     (selectedCell.baseRadius + touchRadius*zoom) * 4f,
                     (selectedCell.baseRadius + touchRadius*zoom) * 4f);
-*/
+
             game.batch.setColor(
                     selectedCell.getColor().r,
                     selectedCell.getColor().g,
                     selectedCell.getColor().b,
                     selectedCell.getColor().a*0.8f);
-
+*/
             game.batch.draw(
-                    defense,
-                    selectedCell.body.getPosition().x* MainGame.PPM - selectedCell.baseRadius - touchRadius*zoom,
-                    selectedCell.body.getPosition().y* MainGame.PPM - selectedCell.baseRadius - touchRadius*zoom,
-                    (selectedCell.baseRadius + touchRadius*zoom) * 2,
-                    (selectedCell.baseRadius + touchRadius*zoom) * 2);
+                    textureSelect,
+                    selectedCell.body.getPosition().x* MainGame.PPM - selectedCell.baseRadius - touchRadius,
+                    selectedCell.body.getPosition().y* MainGame.PPM - selectedCell.baseRadius - touchRadius,
+                    (selectedCell.baseRadius + touchRadius) * 2,
+                    (selectedCell.baseRadius + touchRadius) * 2);
 
         }
 
@@ -778,12 +784,8 @@ public class PlayScreen implements Screen{
                     (targetCell.baseRadius + touchRadius*zoom) * 4,
                     (targetCell.baseRadius + touchRadius*zoom) * 4);
 */
-            game.batch.setColor(
-                    MainGame.colors.get(0).r,
-                    MainGame.colors.get(0).g,
-                    MainGame.colors.get(0).b,
-                    MainGame.colors.get(0).a * 0.8f);
 
+/*
             if(targetCell.team == Unity.Team.NEUTRAL) {
                 //draw select
                 game.batch.draw(
@@ -792,15 +794,16 @@ public class PlayScreen implements Screen{
                         targetCell.body.getPosition().y * MainGame.PPM - (targetCell.baseRadius + touchRadius * zoom),
                         (targetCell.baseRadius + touchRadius * zoom) * 2f,
                         (targetCell.baseRadius + touchRadius * zoom) * 2f);
-            }else{
+                        */
+      //      }else{
                 game.batch.draw(
-                        attackEffect,
+                        textureSelect,
                         targetCell.body.getPosition().x * MainGame.PPM - (targetCell.baseRadius + touchRadius * zoom),
                         targetCell.body.getPosition().y * MainGame.PPM - (targetCell.baseRadius + touchRadius * zoom),
                         (targetCell.baseRadius + touchRadius * zoom) * 2f,
                         (targetCell.baseRadius + touchRadius * zoom) * 2f);
 
-            }
+        //    }
 
         }
     }
@@ -871,50 +874,66 @@ public class PlayScreen implements Screen{
 
     private void DrawAttack(Attack attack){
 
-
-
         game.batch.setColor(attack.getColor());
 
-        game.batch.draw(textureAttack,
+        game.batch.draw(textureCell,
                 attack.body.getPosition().x* MainGame.PPM - attack.energyRadius,
                 attack.body.getPosition().y* MainGame.PPM - attack.energyRadius,
                 attack.energyRadius *2,attack.energyRadius *2);
 
         switch (attack.type){
             case SIZE:
+/*
+                game.batch.draw(regionSizeWhite,
+                        attack.body.getPosition().x * MainGame.PPM - attack.energyRadius * 0.75f,
+                        attack.body.getPosition().y * MainGame.PPM - attack.energyRadius * 0.75f,
+                        attack.energyRadius * 0.75f,
+                        attack.energyRadius * 0.75f,
+                        attack.energyRadius * 1.5f,
+                        attack.energyRadius * 1.5f,
+                        1,
+                        1,
+                        attack.body.getAngle()*180/3.14f);
+/*
                 game.batch.draw(regionSize,
-                        attack.body.getPosition().x * MainGame.PPM - attack.energyRadius * 0.8f,
-                        attack.body.getPosition().y * MainGame.PPM - attack.energyRadius * 0.8f,
-                        attack.energyRadius * 0.8f,
-                        attack.energyRadius * 0.8f,
-                        attack.energyRadius * 1.6f,
-                        attack.energyRadius * 1.6f,
-                        1,
-                        1,
-                        attack.body.getAngle()*180/3.14f);
-                break;
-            case REGEN:
-                game.batch.draw(regionRegen,
-                        attack.body.getPosition().x * MainGame.PPM - attack.energyRadius * 0.5f,
-                        attack.body.getPosition().y * MainGame.PPM - attack.energyRadius * 0.5f,
-                        attack.energyRadius * 0.5f,
-                        attack.energyRadius * 0.5f,
+                        attack.body.getPosition().x * MainGame.PPM - attack.energyRadius * 1f,
+                        attack.body.getPosition().y * MainGame.PPM - attack.energyRadius * 1f,
                         attack.energyRadius * 1f,
                         attack.energyRadius * 1f,
-                        1,
-                        1,
-                        attack.body.getAngle()*180/3.14f);
-
-                game.batch.draw(regionRegenWhite,
-                        attack.body.getPosition().x * MainGame.PPM - attack.energyRadius * 0.8f,
-                        attack.body.getPosition().y * MainGame.PPM - attack.energyRadius * 0.8f,
-                        attack.energyRadius * 0.8f,
-                        attack.energyRadius * 0.8f,
-                        attack.energyRadius * 1.6f,
-                        attack.energyRadius * 1.6f,
+                        attack.energyRadius * 2f,
+                        attack.energyRadius * 2f,
                         1,
                         1,
                         attack.body.getAngle()*180/3.14f + 45);
+
+*/
+                break;
+
+            case REGEN:
+
+                game.batch.draw(regionRegenWhite,
+                        attack.body.getPosition().x * MainGame.PPM - attack.energyRadius * 0.75f,
+                        attack.body.getPosition().y * MainGame.PPM - attack.energyRadius * 0.75f,
+                        attack.energyRadius * 0.75f,
+                        attack.energyRadius * 0.75f,
+                        attack.energyRadius * 1.5f,
+                        attack.energyRadius * 1.5f,
+                        1,
+                        1,
+                        attack.body.getAngle()*180/3.14f + 45);
+/*
+                game.batch.draw(regionRegen,
+                        attack.body.getPosition().x * MainGame.PPM - attack.energyRadius * 1f,
+                        attack.body.getPosition().y * MainGame.PPM - attack.energyRadius * 1f,
+                        attack.energyRadius * 1f,
+                        attack.energyRadius * 1f,
+                        attack.energyRadius * 2f,
+                        attack.energyRadius * 2f,
+                        1,
+                        1,
+                        attack.body.getAngle()*180/3.14f);
+*/
+
                 break;
         }
 

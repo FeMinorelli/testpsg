@@ -217,7 +217,7 @@ public class Unity extends Actor {
             }
 
             if (InputPosition(inputPosition).dst(BodyPosition(bodyPosition)) > baseRadius &&
-                    InputPosition(inputPosition).dst(BodyPosition(bodyPosition)) < (baseRadius + PlayScreen.touchRadius * PlayScreen.zoom)) {
+                    InputPosition(inputPosition).dst(BodyPosition(bodyPosition)) < (baseRadius + PlayScreen.touchRadius * PlayScreen.zoomInit)) {
                 PlayScreen.attackDirection = InputPosition(inputPosition).sub(BodyPosition(bodyPosition)).angle();
 
                 PlayScreen.typeAttack = Genetic.GenType.DEFENSIVE;

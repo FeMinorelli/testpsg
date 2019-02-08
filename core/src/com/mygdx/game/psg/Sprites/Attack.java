@@ -131,7 +131,7 @@ public class Attack extends Actor {
 
         switch (type){
             case REGEN:
-                fixtureDef.isSensor = true;
+                fixtureDef.isSensor = true; break;
             case OFFENSIVE:
                 fixtureDef.density = 1.5f;
                 fixtureDef.friction = 0.5f;
@@ -148,6 +148,7 @@ public class Attack extends Actor {
                 fixtureDef.density = 0.2f;
                 fixtureDef.friction = 0.2f;
                 fixtureDef.restitution = 0.2f;break;
+                //fixtureDef.isSensor = true; break;
         }
 
         return fixtureDef;
