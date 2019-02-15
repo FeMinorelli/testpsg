@@ -1,6 +1,7 @@
 package com.mygdx.game.psg.Engine;
 
 import com.mygdx.game.psg.MainGame;
+import com.mygdx.game.psg.Sprites.Attack;
 import com.mygdx.game.psg.Sprites.Unity;
 
 import static com.badlogic.gdx.math.MathUtils.random;
@@ -52,19 +53,122 @@ public class Bot {
         return null;
     }
 
-    public Genetic.GenType getAction(Unity selected){
-        int index = random(0, Genetic.GenType.values().length - 1);
+    public Genetic.GenType getAttack(Unity selected, Unity target){
+        int index = -1;
 
-        switch (selected.team) {
-            case BOT1: if(bot1[index] > random(0, MainGame.chance)){return Genetic.GenType.values()[index];} break;
-            case BOT2: if(bot2[index] > random(0, MainGame.chance)){return Genetic.GenType.values()[index];} break;
-            case BOT3: if(bot3[index] > random(0, MainGame.chance)){return Genetic.GenType.values()[index];} break;
-            case BOT4: if(bot4[index] > random(0, MainGame.chance)){return Genetic.GenType.values()[index];} break;
-            case BOT5: if(bot5[index] > random(0, MainGame.chance)){return Genetic.GenType.values()[index];} break;
-            case NEUTRAL: if(neutral[index] > random(0, MainGame.chance)){return Genetic.GenType.values()[index];} break;
+        if(selected.team == target.team){
+            index = Genetic.GenType.REGEN.ordinal();
+        }else{
+            switch (target.team){
+                case PLAYER:
+                    index = Genetic.GenType.OFFENSIVE.ordinal();
+                    break;
+                case NEUTRAL:
+                    index = Genetic.GenType.SPEED.ordinal();
+                    break;
+            }
+        }
+
+        if(index != -1) {
+
+            switch (selected.team) {
+                case BOT1:
+                    if (bot1[index] > random(0, MainGame.chance)) {
+                        return Genetic.GenType.values()[index];
+                    }
+                    break;
+                case BOT2:
+                    if (bot2[index] > random(0, MainGame.chance)) {
+                        return Genetic.GenType.values()[index];
+                    }
+                    break;
+                case BOT3:
+                    if (bot3[index] > random(0, MainGame.chance)) {
+                        return Genetic.GenType.values()[index];
+                    }
+                    break;
+                case BOT4:
+                    if (bot4[index] > random(0, MainGame.chance)) {
+                        return Genetic.GenType.values()[index];
+                    }
+                    break;
+                case BOT5:
+                    if (bot5[index] > random(0, MainGame.chance)) {
+                        return Genetic.GenType.values()[index];
+                    }
+                    break;
+                case NEUTRAL:
+                    if (neutral[index] > random(0, MainGame.chance)) {
+                        return Genetic.GenType.values()[index];
+                    }
+                    break;
+            }
+        }
+
+        return null;
+    }
+
+    public Genetic.GenType getAvoid(Unity selected, Attack attack){
+        int index = -1;
+
+        if(selected.team != attack.team && attack.type != null){
+            switch (attack.type){
+                case OFFENSIVE:
+                    index = Genetic.GenType.DEFENSIVE.ordinal();
+                    break;
+                case SPEED:
+                    index = Genetic.GenType.DEFENSIVE.ordinal();
+                    break;
+                case REGEN:
+                    Genetic.GenType.SIZE.ordinal();
+                    break;
+                case DEFENSIVE:
+                    index = Genetic.GenType.SIZE.ordinal();
+                    break;
+                case SIZE:
+                    index = Genetic.GenType.SIZE.ordinal();
+                    break;
+            }
+        }
+
+        if(index != -1) {
+
+            switch (selected.team) {
+                case BOT1:
+                    if (bot1[index] > random(0, MainGame.chance)) {
+                        return Genetic.GenType.values()[index];
+                    }
+                    break;
+                case BOT2:
+                    if (bot2[index] > random(0, MainGame.chance)) {
+                        return Genetic.GenType.values()[index];
+                    }
+                    break;
+                case BOT3:
+                    if (bot3[index] > random(0, MainGame.chance)) {
+                        return Genetic.GenType.values()[index];
+                    }
+                    break;
+                case BOT4:
+                    if (bot4[index] > random(0, MainGame.chance)) {
+                        return Genetic.GenType.values()[index];
+                    }
+                    break;
+                case BOT5:
+                    if (bot5[index] > random(0, MainGame.chance)) {
+                        return Genetic.GenType.values()[index];
+                    }
+                    break;
+                case NEUTRAL:
+                    if (neutral[index] > random(0, MainGame.chance)) {
+                        return Genetic.GenType.values()[index];
+                    }
+                    break;
+            }
         }
         return null;
     }
+
 
     public void Adjust(){
 

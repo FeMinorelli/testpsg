@@ -11,6 +11,7 @@ import com.mygdx.game.psg.MainGame;
 import com.mygdx.game.psg.Screens.PlayScreen;
 
 import static com.badlogic.gdx.math.MathUtils.random;
+import static com.badlogic.gdx.math.MathUtils.randomBoolean;
 
 public class Attack extends Actor {
 
@@ -21,63 +22,100 @@ public class Attack extends Actor {
     public Genetic.GenType type;
 
     public float baseAttack,maxEnergy, actualEnergy, energyRadius, baseRadius, baseMove;
-    public boolean remove, modifyEnergy, fixVelocity;
+    public boolean remove, modifyEnergy, fixVelocity, explosion;
+    private int modify;
+    public int cooldown = MainGame.cooldownAttack;
 
-    private  int resize;
     public int inactivity;
 
     private CircleShape circleShape = new CircleShape();
     private FixtureDef fixtureDef = new FixtureDef();
 
-    public Attack(Unity cell, Unity target, Genetic.GenType type, float angle){
-        baseMove = cell.baseMove*2;
-        baseAttack = cell.baseAttack;
-        baseRadius = cell.baseRadius;
-        maxEnergy = cell.maxEnergy;
+    int angle = 0;
+    boolean typeIncrement = randomBoolean();
+
+    public Attack(Unity unity, Genetic.GenType type, float angle, int modify, boolean explosion){
+        baseMove = unity.baseMove*2;
+        baseAttack = unity.baseAttack;
+        baseRadius = unity.baseRadius;
+        maxEnergy = unity.maxEnergy;
         fixVelocity = false;
-        setColor(cell.getColor());
-        this.team = cell.team;
+        setColor(unity.getColor());
+        this.explosion = explosion;
+        this.modify = modify;
+        this.team = unity.team;
         this.type = type;
 
+        if(explosion){
+            actualEnergy = baseAttack + unity.maxEnergy / 10;
+            energyRadius = baseRadius * RadiusEnergy(actualEnergy) / RadiusEnergy(maxEnergy);
+        }else {
 
-        switch (type){
-            case SIZE:
-                actualEnergy = 3f * cell.baseAttack + cell.maxEnergy/10;
-                energyRadius = baseRadius * RadiusEnergy(actualEnergy) / RadiusEnergy(maxEnergy);break;
-            case REGEN:
-                cell.actualEnergy = cell.actualEnergy * 0.6f;
-                actualEnergy = 4f * baseAttack + cell.actualEnergy * 0.4f;
-                energyRadius = baseRadius * RadiusEnergy(actualEnergy) / RadiusEnergy(maxEnergy); break;
-            case SPEED:
-                cell.actualEnergy = cell.actualEnergy * 0.5f;
-                actualEnergy = 5f * baseAttack + cell.actualEnergy * 0.5f;
-                energyRadius = baseRadius * RadiusEnergy(actualEnergy) / RadiusEnergy(maxEnergy);break;
-            case OFFENSIVE:
-                cell.actualEnergy = cell.actualEnergy * 0.4f;
-                actualEnergy = 7f * baseAttack + cell.actualEnergy * 0.6f;
-                energyRadius = baseRadius * RadiusEnergy(actualEnergy) / RadiusEnergy(maxEnergy); break;
-            case DEFENSIVE:
-                actualEnergy = 2f * baseAttack + cell.actualEnergy * 0.2f;
-                energyRadius = baseRadius * RadiusEnergy(actualEnergy) / RadiusEnergy(maxEnergy);break;
+            switch (type) {
+                case SIZE:
+                    actualEnergy = baseAttack + unity.actualEnergy* 0.1f;
+                    unity.actualEnergy = unity.actualEnergy * 0.9f;
+                    energyRadius = baseRadius * RadiusEnergy(actualEnergy) / RadiusEnergy(maxEnergy);
+                    break;
+                case DEFENSIVE:
+                    actualEnergy = baseAttack + unity.actualEnergy * 0.05f;
+                    energyRadius = baseRadius * RadiusEnergy(actualEnergy) / RadiusEnergy(maxEnergy);
+                    break;
+                case SPEED:
+                    actualEnergy = baseAttack + unity.actualEnergy * 0.15f;
+                    energyRadius = baseRadius * RadiusEnergy(actualEnergy) / RadiusEnergy(maxEnergy);
+                    break;
+                case REGEN:
+                    actualEnergy = baseAttack + unity.actualEnergy * 0.4f;
+                    unity.actualEnergy = unity.actualEnergy * 0.6f;
+                    energyRadius = baseRadius * RadiusEnergy(actualEnergy) / RadiusEnergy(maxEnergy);
+                    break;
+                case OFFENSIVE:
+                    actualEnergy =  unity.actualEnergy * 0.5f;
+                    unity.actualEnergy = unity.actualEnergy * 0.5f;
+                    energyRadius = baseRadius * RadiusEnergy(actualEnergy) / RadiusEnergy(maxEnergy);
+                    break;
+            }
         }
 
-        setAttack(cell, angle);
+        setAttack(unity, angle);
     }
 
-    private void setAttack(Unity cell, float angle){
+    private void setAttack(Unity unity, float angle){
+        if(explosion){
+            velocity.set(unity.baseRadius + energyRadius, energyRadius/10).setAngle(angle);
+            SetBody(unity, velocity.x, velocity.y, angle);
+        }else{
 
-        switch (type){
-            case SIZE: velocity.set(cell.baseRadius + (energyRadius * 3.14f),cell.baseRadius + (energyRadius * 3.14f)).setAngle(angle);break;
-            case DEFENSIVE: velocity.set(cell.baseRadius + energyRadius, 1).setAngle(angle); fixVelocity = true; break;
-            case SPEED: velocity.set(cell.baseRadius + energyRadius,1).setAngle(angle);break;
-            case OFFENSIVE: velocity.set(cell.baseRadius + energyRadius,1).setAngle(angle);break;
-            case REGEN: velocity.set(cell.baseRadius + energyRadius, 1).setAngle(angle);break;
+            switch (type) {
+                case SIZE:
+                    velocity.set(unity.baseRadius + energyRadius,  energyRadius/10).setAngle(angle - 180);
+                    SetBody(unity, velocity.x, velocity.y, angle - 180);
+                    fixVelocity = true;
+                    break;
+                case DEFENSIVE:
+                    velocity.set(unity.baseRadius + energyRadius,  energyRadius/10).setAngle(angle);
+                    SetBody(unity, velocity.x, velocity.y, angle);
+                    fixVelocity = true;
+                    break;
+                case SPEED:
+                    velocity.set(unity.baseRadius + energyRadius,  energyRadius/10).setAngle(angle + 20*modify);
+                    SetBody(unity, velocity.x, velocity.y, angle);
+                    break;
+                case OFFENSIVE:
+                    velocity.set(unity.baseRadius + energyRadius,  energyRadius/10).setAngle(angle);
+                    SetBody(unity, velocity.x, velocity.y, angle);
+                    break;
+                case REGEN:
+                    velocity.set(unity.baseRadius + energyRadius,  energyRadius/10).setAngle(angle);
+                    SetBody(unity, velocity.x, velocity.y, angle);
+                    fixVelocity = true;
+                    break;
 
-
+            }
         }
 
-        SetBody(cell, velocity.x, velocity.y, angle);
-        body.setAngularVelocity(random(-2f,2f));
+        body.setAngularVelocity(random(-5f,5f));
     }
 
     @Override
@@ -89,11 +127,206 @@ public class Attack extends Actor {
         DelimiterBorder();
         RefactorEnergy(delta);
         RefactorFixture();
+
+        if(cooldown < MainGame.cooldownAttack){
+            cooldown++;
+        }
+
+        if(type == Genetic.GenType.OFFENSIVE && !remove) {
+
+            if (angle == 60 || angle == -60) {
+                typeIncrement = !typeIncrement;
+            }
+
+            body.setLinearVelocity(body.getLinearVelocity().x * 1.0025f, body.getLinearVelocity().y * 1.0025f);
+
+            if (typeIncrement) {
+                body.setLinearVelocity(body.getLinearVelocity().setAngle(body.getLinearVelocity().angle() + 5));
+                angle += 5;
+            } else {
+                body.setLinearVelocity(body.getLinearVelocity().setAngle(body.getLinearVelocity().angle() - 5));
+                angle -= 5;
+            }
+        }
+    }
+
+
+
+    private FixtureDef SetFixtureDef(){
+
+        circleShape.setRadius((baseRadius * RadiusEnergy(actualEnergy)/RadiusEnergy(maxEnergy)) /MainGame.PPM);
+        fixtureDef.shape = circleShape;
+
+        if(explosion){
+            fixtureDef.density = 0.1f;
+            fixtureDef.friction = 0.1f;
+            fixtureDef.restitution = 0.1f;
+        }else {
+
+            switch (type) {
+                case REGEN:
+                    fixtureDef.density = 0.2f;
+                    fixtureDef.friction = 0.2f + modify;
+                    fixtureDef.restitution = 0.2f;
+                    break;
+                case OFFENSIVE:
+                    fixtureDef.density = 1f;
+                    fixtureDef.friction = 1f;
+                    fixtureDef.restitution = 1f;
+                    break;
+                case SPEED:
+                    fixtureDef.density = 0.1f;
+                    if(modify > 0) {
+                        fixtureDef.friction = 1f - 0.3f * modify;
+                        fixtureDef.restitution = 1f + 0.1f * modify;
+                    }else{
+                        fixtureDef.friction = 1f + 0.3f * modify;
+                        fixtureDef.restitution = 1f - 0.1f * modify;
+                    }
+                    break;
+                case DEFENSIVE:
+                    if(modify > 0) {
+                        fixtureDef.density = 1f + modify;
+                        fixtureDef.friction = 1f + modify;
+                    }else{
+                        fixtureDef.density = 1f - modify;
+                        fixtureDef.friction = 1f - modify;
+                    }
+                    fixtureDef.restitution = 0.1f;
+                    break;
+                case SIZE:
+                    fixtureDef.density = 1.5f;
+                    fixtureDef.friction = 0.1f;
+                    fixtureDef.restitution = 1f;
+                    break;
+            }
+        }
+
+        return fixtureDef;
+    }
+
+    private  void SetBody(Unity unity, float x, float y, float angle){
+        BodyDef bodyDef = new BodyDef();
+
+        bodyDef.position.set(unity.body.getPosition().x + x/MainGame.PPM,
+                unity.body.getPosition().y + y/MainGame.PPM);
+
+        bodyDef.type = BodyDef.BodyType.DynamicBody;
+        body = PlayScreen.world.createBody(bodyDef);
+
+
+        body.createFixture(SetFixtureDef());
+        body.setBullet(true);
+
+        if(explosion){
+            velocity.set(baseMove * 4, baseMove * 4).setAngle(angle);
+            body.setLinearVelocity(velocity);
+        }else {
+            switch (type) {
+                case SIZE:
+                    velocity.set(0,0);
+                    body.setLinearVelocity(velocity);
+                    break;
+                case DEFENSIVE:
+                    if(modify < 0){
+                        velocity.set(baseMove / (6 + modify * 2), baseMove / (6 + modify * 2)).setAngle(angle);
+                    }else{
+                        velocity.set(baseMove / (6 - modify * 2), baseMove / (6 - modify * 2)).setAngle(angle);
+                    }
+
+                    body.setLinearVelocity(velocity);
+                    break;
+                case SPEED:
+                    if(modify < 0){
+                        velocity.set(baseMove * 2 * (-1)*modify, baseMove * 2 * (-1)*modify).setAngle(angle);
+                    }else{
+                        velocity.set(baseMove * 2*modify, baseMove * 2*modify).setAngle(angle);
+                    }
+
+                    body.setLinearVelocity(velocity);
+                    break;
+                case OFFENSIVE:
+                    velocity.set(baseMove, baseMove).setAngle(angle);
+                    body.setLinearVelocity(velocity);
+                    break;
+                case REGEN:
+                    velocity.set(baseMove / 2, baseMove / 2).setAngle(angle);
+                    body.setLinearVelocity(velocity);
+                    break;
+            }
+        }
     }
 
     private float RadiusEnergy(float energy){
 
         return (float)Math.sqrt(energy*(float)Math.PI);
+    }
+
+    private void RefactorFixture(){
+            body.destroyFixture(body.getFixtureList().pop());
+            body.createFixture(SetFixtureDef());
+            energyRadius = baseRadius * RadiusEnergy(actualEnergy) / RadiusEnergy(maxEnergy);
+    }
+
+    private void RefactorEnergy(float delta){
+
+        inactivity++;
+
+        if(explosion){
+            if (energyRadius < maxEnergy/2 && inactivity < 25) {
+                actualEnergy = actualEnergy + maxEnergy * 0.01f * delta;
+            }else{
+                actualEnergy = actualEnergy - 60 * PlayScreen.numberAttack*delta;
+            }
+        }else {
+
+            switch (type) {
+                case SPEED:
+                    if (energyRadius < maxEnergy/2 && inactivity < 50) {
+                        actualEnergy = actualEnergy + maxEnergy * 0.04f * delta;
+                    }else{
+                        actualEnergy = actualEnergy - 10 * PlayScreen.numberAttack*delta;
+                    }
+                    break;
+                case OFFENSIVE:
+                    if (energyRadius < maxEnergy/2 && inactivity < 100) {
+                        actualEnergy = actualEnergy + maxEnergy * 0.03f  * delta;
+                    }else{
+                        actualEnergy = actualEnergy - 30 * PlayScreen.numberAttack*delta;
+                    }
+                    break;
+                case REGEN:
+                    if (energyRadius < maxEnergy/2 && inactivity < 200) {
+                        actualEnergy = actualEnergy + maxEnergy * 0.06f * delta;
+                    }else{
+                        actualEnergy = actualEnergy - 40 * PlayScreen.numberAttack*delta;
+                    }
+                    break;
+                case DEFENSIVE:
+                    if (energyRadius < maxEnergy/2 && inactivity < 150) {
+                        actualEnergy = actualEnergy + maxEnergy * 0.02f * delta;
+                    }else{
+                        actualEnergy = actualEnergy - 20 * PlayScreen.numberAttack*delta;
+                    }
+                    break;
+                case SIZE:
+                    if(actualEnergy < maxEnergy/2 && inactivity < 250) {
+                        actualEnergy = actualEnergy + maxEnergy * 0.05f * delta;
+                    }else{
+                        actualEnergy = actualEnergy - 50 * PlayScreen.numberAttack*delta;
+                    }
+                    break;
+            }
+        }
+
+        if(actualEnergy < PlayScreen.numberAttack*delta){
+            actualEnergy = 1;
+            remove = true;
+        }
+
+        if(actualEnergy > maxEnergy){
+            actualEnergy = maxEnergy;
+        }
     }
 
     private void DelimiterBorder() {
@@ -123,123 +356,6 @@ public class Attack extends Actor {
             }
         }
     }
-
-    private FixtureDef SetFixtureDef(){
-
-        circleShape.setRadius((baseRadius * RadiusEnergy(actualEnergy)/RadiusEnergy(maxEnergy)) /MainGame.PPM);
-        fixtureDef.shape = circleShape;
-
-        switch (type){
-            case REGEN:
-                fixtureDef.isSensor = true; break;
-            case OFFENSIVE:
-                fixtureDef.density = 1.5f;
-                fixtureDef.friction = 0.5f;
-                fixtureDef.restitution = 0.5f;break;
-            case SPEED:
-                fixtureDef.density = 0.01f;
-                fixtureDef.friction = 1f;
-                fixtureDef.restitution = 1.1f;break;
-            case DEFENSIVE:
-                fixtureDef.density = 3f;
-                fixtureDef.friction = 1f ;
-                fixtureDef.restitution = 0.1f ;break;
-            case SIZE:
-                fixtureDef.density = 0.2f;
-                fixtureDef.friction = 0.2f;
-                fixtureDef.restitution = 0.2f;break;
-                //fixtureDef.isSensor = true; break;
-        }
-
-        return fixtureDef;
-    }
-
-    private  void SetBody(Unity cell, float x, float y, float angle){
-        BodyDef bodyDef = new BodyDef();
-
-        bodyDef.position.set(cell.body.getPosition().x + x/MainGame.PPM,
-                cell.body.getPosition().y + y/MainGame.PPM);
-
-        bodyDef.type = BodyDef.BodyType.DynamicBody;
-        body = PlayScreen.world.createBody(bodyDef);
-
-
-        body.createFixture(SetFixtureDef());
-        body.setBullet(true);
-
-        switch (type){
-            case SIZE:
-                velocity.set(baseMove*3, baseMove*3).setAngle(angle);
-                body.setLinearVelocity(velocity);break;
-            case DEFENSIVE:
-                velocity.set(baseMove/6, baseMove/6).setAngle(angle);
-                body.setLinearVelocity(velocity);break;
-            case SPEED:
-                velocity.set(baseMove*2, baseMove*2).setAngle(angle);
-                body.setLinearVelocity(velocity);break;
-            case OFFENSIVE:
-                velocity.set(baseMove, baseMove).setAngle(angle);
-                body.setLinearVelocity(velocity);break;
-            case REGEN:
-                velocity.set(baseMove/2, baseMove/2).setAngle(angle);
-                body.setLinearVelocity(velocity);break;
-        }
-    }
-
-    private void RefactorFixture(){
-        if(resize > 15 || modifyEnergy) {
-
-            body.destroyFixture(body.getFixtureList().pop());
-            body.createFixture(SetFixtureDef());
-
-            energyRadius = baseRadius * RadiusEnergy(actualEnergy) / RadiusEnergy(maxEnergy);
-            modifyEnergy = false;
-            resize = 0;
-        }
-    }
-
-    private void RefactorEnergy(float delta){
-
-        inactivity++;
-        resize++;
-
-        switch (type){
-            case SPEED:
-                if (energyRadius < 100) {
-                actualEnergy = actualEnergy + baseAttack/5 * baseMove * delta ; }break;
-            case OFFENSIVE:
-                if (energyRadius > 100) {
-                    actualEnergy = actualEnergy + 20 * PlayScreen.numberAttack * delta; } break;
-            case REGEN:
-                    actualEnergy = actualEnergy + actualEnergy * 0.1f * delta; break;
-            case DEFENSIVE:
-                if (inactivity > 100) {
-                    actualEnergy = actualEnergy - actualEnergy * 0.01f * delta; } break;
-            case SIZE:
-                actualEnergy = actualEnergy - 20 * PlayScreen.numberAttack * delta; break;
-        }
-
-
-
-        if (inactivity > 200) {
-            actualEnergy = actualEnergy - 10*PlayScreen.numberAttack*delta;
-        }
-
-
-        if (energyRadius < 50) {
-            actualEnergy = actualEnergy - 10*PlayScreen.numberAttack*delta;
-        }
-
-        if (energyRadius > 100) {
-            actualEnergy = actualEnergy - 10*PlayScreen.numberAttack*delta;
-        }
-
-        if(actualEnergy < PlayScreen.numberAttack*delta){
-            actualEnergy = 1;
-            remove = true;
-        }
-    }
-
 }
 
 

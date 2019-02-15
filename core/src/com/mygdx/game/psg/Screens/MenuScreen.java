@@ -44,7 +44,6 @@ public class MenuScreen implements Screen {
     private Texture textureSelect = new Texture("Textures//select.png");
     private Texture textureAttack = new Texture("Textures//attack.png");
     private Texture textureCircle = new Texture("Textures//circle.png");
-    private Texture textureTitle = new Texture("Textures//title.png");
     private Texture texturePrimum = new Texture("Textures//primum.png");
     private Texture textureWin = new Texture("Textures//vitoria.png");
     private Texture textureLose = new Texture("Textures//derrota.png");
@@ -118,7 +117,6 @@ public class MenuScreen implements Screen {
         textureCell.dispose();
         textureCircle.dispose();
         textureSelect.dispose();
-        textureTitle.dispose();
         textureColors.dispose();
         textureContinue.dispose();
         textureLose.dispose();

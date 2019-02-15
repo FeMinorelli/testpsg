@@ -31,7 +31,9 @@ public class MainGame extends Game{
 	public static final int unityNumber = 25;
     public static Genetic[] playerUnits, bot1Units, bot2Units, bot3Units, bot4Units, bot5Units, neutralUnits;
 
-    public static final int min = 25, max = 75, chance = 20000;
+    public static final int min = 25, max = 75, chance = 50000;
+    public static final int cooldownAttack = 60 , coolDownUnity = 60;
+    public static final float touch = 2.5f;
 
     public SpriteBatch batch;
     private PlayScreen playScreen;
@@ -157,11 +159,7 @@ public class MainGame extends Game{
 
             } else {
 
-                try {
-                    playScreen = new PlayScreen(this);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                playScreen = new PlayScreen(this);
                 setScreen(playScreen);
                 altered = false;
             }

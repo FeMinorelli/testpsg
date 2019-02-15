@@ -35,12 +35,13 @@ public class Unity extends Actor {
     public Team team;
     public Body body;
     public Genetic DNA;
-    public static Status status;
+    public Status status;
 
     private Vector2 bodyPosition, inputPosition, velocity;
     private float  baseRegeneration;
     public  float baseRadius, radiusEnergy, baseAttack, baseMove, actualEnergy, maxEnergy;
     public int[] resume;
+    public int cooldown = MainGame.coolDownUnity;
 
     public Unity(float x, float y, Team team) {
 
@@ -55,14 +56,14 @@ public class Unity extends Actor {
 
         // 0 = size, 1 = attack, 2 = defense, 3 = speed, 4 = regen
         this.resume = DNA.getResume();
-        baseRadius = 100 + 5f * resume[0];
+        baseRadius = 50 + 10f * resume[Genetic.GenType.SIZE.ordinal()];
         maxEnergy = CircleArea(baseRadius);
 
-        baseRegeneration = 5f + resume[4] * 0.05f;
-        baseAttack = CircleArea(10) + resume[1] * CircleArea(5);
-        baseMove = 1f + resume[4] * 0.25f;
+        baseRegeneration = 1f + resume[Genetic.GenType.REGEN.ordinal()];
+        baseAttack = CircleArea(10) + resume[Genetic.GenType.OFFENSIVE.ordinal()] * CircleArea(5);
+        baseMove = 1f + resume[Genetic.GenType.SPEED.ordinal()] * 0.25f;
 
-        actualEnergy = maxEnergy * resume[2] * 0.01f;
+        actualEnergy = maxEnergy * resume[Genetic.GenType.DEFENSIVE.ordinal()] * 0.025f;
         radiusEnergy = baseRadius*RadiusEnergy(actualEnergy)/RadiusEnergy(maxEnergy);
 
         this.team = team;
@@ -85,7 +86,7 @@ public class Unity extends Actor {
         circleShape.setRadius(baseRadius / MainGame.PPM);
 
         fixtureDef.shape = circleShape;
-        fixtureDef.density = 0.6f;
+        fixtureDef.density = 1f;
         fixtureDef.friction = 1f;
         fixtureDef.restitution = 1f;
         body.createFixture(fixtureDef);
@@ -94,35 +95,33 @@ public class Unity extends Actor {
             body.setLinearVelocity(velocity.setToRandomDirection());
         }
 
-        body.setAngularVelocity(random(-1f,1f));
+        body.setAngularVelocity(random(-2f,2f));
     }
 
     @Override
     public void act(float delta) {
-        radiusEnergy = baseRadius * RadiusEnergy(actualEnergy)/RadiusEnergy(maxEnergy);
+
 
         if(PlayScreen.oneSelected && PlayScreen.selectedCell.team != Unity.Team.PLAYER){
             PlayScreen.oneSelected = false;
         }
 
-
-        if(PlayScreen.oneTarget && PlayScreen.oneSelected) {
-
-        }else{
-
-            if(PlayScreen.oneTarget && PlayScreen.targetCell.team == Unity.Team.PLAYER){
-                PlayScreen.oneTarget = false;
-            }
-
-            DelimiterBorder();
-            MoveOrAttack();
-            SelectOrTarget();
-            Regeneration();
-
+        if(PlayScreen.oneTarget && PlayScreen.targetCell.team == Unity.Team.PLAYER && !PlayScreen.oneSelected){
+            PlayScreen.oneTarget = false;
         }
 
-
+        DelimiterBorder();
+        if(PlayScreen.cooldown > 60) {
+            SelectOrTarget();
+            MoveOrAttack();
+        }
+        Regeneration(delta);
         setColor();
+
+        if(cooldown < MainGame.coolDownUnity){
+            cooldown++;
+        }
+
     }
 
     private Vector2 BodyPosition(Vector2 bodyPosition) {
@@ -184,6 +183,7 @@ public class Unity extends Actor {
     private void SelectOrTarget() {
         if (Gdx.input.justTouched() && isTouched()){
             Select();
+            PlayScreen.cooldown = 0;
             if(PlayScreen.oneSelected && PlayScreen.oneTarget && !PlayScreen.oneFire) {
 
                 PlayScreen.attackDirection = PlayScreen.targetCell.body.getPosition().sub(PlayScreen.selectedCell.body.getPosition()).angle();
@@ -214,14 +214,17 @@ public class Unity extends Actor {
             if(!isTouched()) {
                 velocity.set(baseMove, baseMove).setAngle(InputPosition(inputPosition).sub(BodyPosition(bodyPosition)).angle());
                 body.setLinearVelocity(velocity);
+                if(!PlayScreen.oneTarget) {
+                    PlayScreen.attackDirection = InputPosition(inputPosition).sub(BodyPosition(bodyPosition)).angle();
+                    PlayScreen.typeAttack = Genetic.GenType.SIZE;
+                    PlayScreen.oneMove = true;
+                }
             }
 
             if (InputPosition(inputPosition).dst(BodyPosition(bodyPosition)) > baseRadius &&
-                    InputPosition(inputPosition).dst(BodyPosition(bodyPosition)) < (baseRadius + PlayScreen.touchRadius * PlayScreen.zoomInit)) {
+                    InputPosition(inputPosition).dst(BodyPosition(bodyPosition)) < (baseRadius * MainGame.touch)) {
                 PlayScreen.attackDirection = InputPosition(inputPosition).sub(BodyPosition(bodyPosition)).angle();
-
                 PlayScreen.typeAttack = Genetic.GenType.DEFENSIVE;
-                PlayScreen.oneTarget = false;
                 PlayScreen.oneFire = true;
             }
         }
@@ -237,24 +240,50 @@ public class Unity extends Actor {
         return (float)Math.sqrt(energy*3.14f);
     }
 
-    public static void Clear(Unity cell) {
-        if(cell.team == Team.PLAYER) {
-            Stop(cell);
+    public static void Clear(Unity unity) {
+        if(unity.team == Team.PLAYER) {
+            Stop(unity);
             PlayScreen.oneFire = false;
-            PlayScreen.oneSelected = false;
+            PlayScreen.oneMove = false;
             PlayScreen.oneTarget = false;
+
+            if(unity.actualEnergy < unity.maxEnergy * 0.05 && PlayScreen.typeAttack != Genetic.GenType.SIZE){
+                PlayScreen.oneSelected = false;
+            }
+
+            if(PlayScreen.typeAttack == Genetic.GenType.REGEN){
+                PlayScreen.oneSelected = true;
+                PlayScreen.selectedCell = PlayScreen.targetCell;
+            }
         }
     }
 
-    private void Regeneration(){
+    private void Regeneration(float delta){
+
         if(team == Team.NEUTRAL){
-            actualEnergy += baseRegeneration + PlayScreen.player + PlayScreen.bots - PlayScreen.neutral;
+            actualEnergy += (baseRegeneration + PlayScreen.player + PlayScreen.bots - PlayScreen.neutral) * delta;
         }else {
-            actualEnergy += baseRegeneration;
+            actualEnergy += (baseRegeneration - PlayScreen.numberAttack) * delta;
         }
 
         if(actualEnergy > maxEnergy){
             actualEnergy = maxEnergy;
+        }
+
+        if(actualEnergy < 0){
+            actualEnergy = 0;
+        }
+
+        radiusEnergy = baseRadius * RadiusEnergy(actualEnergy)/RadiusEnergy(maxEnergy);
+
+        if(actualEnergy < maxEnergy * 0.3f){
+            status = Status.LOW;
+        }else{
+            if(actualEnergy > maxEnergy * 0.7f){
+                status = Status.HI;
+            }else{
+                status = Status.MID;
+            }
         }
     }
 
@@ -309,19 +338,19 @@ public class Unity extends Actor {
         }
     }
 
-    public static void Stop(Unity cell){
-        if(cell.team == Team.PLAYER)
-        cell.body.setLinearVelocity(0,0);
-        cell.body.setAngularVelocity(0);
+    public static void Stop(Unity unity){
+        if(unity.team == Team.PLAYER && PlayScreen.typeAttack != Genetic.GenType.SIZE)
+        unity.body.setLinearVelocity(0,0);
+        unity.body.setAngularVelocity(0);
     }
 
-    public static Status Status(Unity cell){
+    public static Status Status(Unity unity){
 
-        if(cell.actualEnergy < cell.maxEnergy * 0.01f){
+        if(unity.actualEnergy < unity.maxEnergy * 0.01f){
             return Status.LOW;
         }
 
-        if(cell.actualEnergy > cell.maxEnergy * 0.8f){
+        if(unity.actualEnergy > unity.maxEnergy * 0.8f){
             return Status.HI;
         }
 
